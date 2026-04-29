@@ -45,4 +45,9 @@ jobs:
 
     - name: accessibility-scanner
       uses: github/accessibility-scanner@v3.1.0
+      with:
+        urls: 'https://github.com/${{ github.repository }}' # 기본값으로 리포지토리 주소를 설정했습니다.
+        repository: ${{ github.repository }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+
 
