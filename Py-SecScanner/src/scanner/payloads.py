@@ -1,0 +1,8 @@
+PAYLOADS = {
+    "xss": [
+        "<script>alert(1)</script>",
+    ],
+    "sqli": [
+        "' OR '1'='1",
+    ]
+}
