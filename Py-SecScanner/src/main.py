@@ -2,6 +2,7 @@ import sys
 from scanner.crawler import Crawler
 from scanner.engine import ScannerEngine
 from scanner.reporter import Reporter
+from scanner.fuzzer import Fuzzer
 
 def main():
     if len(sys.argv) < 2:
@@ -41,13 +42,17 @@ def main():
         if engine.scan_command_injection(form_details):
             print("[!] Command Injection 취약점 발견!")
 
+    # 3. 퍼징 (디렉토리 탐색)
+    fuzzer = Fuzzer(target_url)
+    fuzz_results = fuzzer.run()
 
-    # 3. 결과 리포트
+    # 4. 결과 리포트
     for res in engine.results:
         reporter.add_result(res)
     
-    reporter.generate_report()
+    reporter.generate_report(fuzzing_results=fuzz_results)
 
 if __name__ == "__main__":
     main()
+
 
