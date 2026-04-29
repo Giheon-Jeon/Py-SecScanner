@@ -44,10 +44,9 @@ class ScannerEngine:
         return False
 
     def scan_sqli(self, form_details):
-        """SQL Injection 취약점을 스캔합니다. (간단한 응답 변화 체크)"""
+        """SQL Injection 취약점을 스캔합니다."""
         for payload in PAYLOADS["sqli"]:
             response = self.submit_form(form_details, self.target_url, payload)
-            # 여기서는 단순히 에러 메시지나 특정 패턴을 체크하는 로직을 추가할 수 있습니다.
             if response and any(error in response.text.lower() for error in ["sql syntax", "mysql_fetch_array", "sqlite3.error"]):
                 self.results.append({
                     "type": "SQLi",
@@ -57,3 +56,32 @@ class ScannerEngine:
                 })
                 return True
         return False
+
+    def scan_lfi(self, form_details):
+        """Local File Inclusion (LFI) 취약점을 스캔합니다."""
+        for payload in PAYLOADS["lfi"]:
+            response = self.submit_form(form_details, self.target_url, payload)
+            if response and any(pattern in response.text for pattern in ["root:x:0:0", "[extensions]", "bin/bash"]):
+                self.results.append({
+                    "type": "LFI",
+                    "url": self.target_url,
+                    "payload": payload,
+                    "method": form_details["method"]
+                })
+                return True
+        return False
+
+    def scan_command_injection(self, form_details):
+        """Command Injection 취약점을 스캔합니다."""
+        for payload in PAYLOADS["command_injection"]:
+            response = self.submit_form(form_details, self.target_url, payload)
+            if response and any(pattern in response.text for pattern in ["uid=", "groups=", "root:x:0:0"]):
+                self.results.append({
+                    "type": "Command Injection",
+                    "url": self.target_url,
+                    "payload": payload,
+                    "method": form_details["method"]
+                })
+                return True
+        return False
+
