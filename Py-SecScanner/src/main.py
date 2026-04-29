@@ -33,6 +33,15 @@ def main():
         if engine.scan_sqli(form_details):
             print("[!] SQL Injection 취약점 발견!")
 
+        # LFI 스캔
+        if engine.scan_lfi(form_details):
+            print("[!] LFI 취약점 발견!")
+
+        # Command Injection 스캔
+        if engine.scan_command_injection(form_details):
+            print("[!] Command Injection 취약점 발견!")
+
+
     # 3. 결과 리포트
     for res in engine.results:
         reporter.add_result(res)
