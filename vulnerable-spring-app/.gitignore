@@ -1,0 +1,25 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+/help.md
+/.mvn/wrapper/maven-wrapper.properties
+/mvnw
+/mvnw.cmd
+/*.jar
+/*.war
+/*.ear
+/*.zip
+/*.tar.gz
+/*.rar
+
+# Log files
+*.log
+
+# IDE files
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
