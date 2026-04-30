@@ -1,0 +1,29 @@
+# 1단계: 취약한 베이스라인 Dockerfile
+
+# 오래된 베이스 이미지 사용 (보안 취약)
+FROM ubuntu:18.04
+
+# 불필요한 패키지 대거 설치 (Attack Surface 증가)
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk \
+    curl \
+    net-tools \
+    vim \
+    telnet \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 애플리케이션 JAR 파일 복사 (미리 빌드되었다고 가정)
+COPY target/vulnerable-spring-app-0.0.1-SNAPSHOT.jar app.jar
+
+# ROOT 계정으로 실행 (강력한 권한 부여 - 위험)
+USER root
+
+# 포트 개방
+EXPOSE 8080
+
+# 애플리케이션 실행
+ENTRYPOINT ["java", "-jar", "app.jar"]
