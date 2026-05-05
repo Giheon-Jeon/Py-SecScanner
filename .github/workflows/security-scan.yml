@@ -1,0 +1,48 @@
+name: Container Security Hardening Pipeline
+
+on:
+  push:
+    branches: [ "BE-전기헌-*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn -f vulnerable-spring-app/pom.xml clean package -DskipTests
+
+      - name: Build Docker Image
+        run: |
+          docker build -t vulnerable-app:${{ github.sha }} -f vulnerable-spring-app/Dockerfile.vulnerable vulnerable-spring-app/
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'vulnerable-app:${{ github.sha }}'
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Parse Scan Results with Python
+        run: |
+          python vulnerable-spring-app/scripts/scan_parser.py --file trivy-results.json --fail-high
+
+      - name: Upload Scan Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-report
+          path: trivy-results.json
