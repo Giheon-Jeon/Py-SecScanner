@@ -60,6 +60,7 @@ def main():
         reporter.add_result(res)
     
     reporter.generate_report(fuzzing_results=fuzz_results, header_results=header_results)
+    reporter.save_to_json(fuzzing_results=fuzz_results, header_results=header_results)
 
 
 if __name__ == "__main__":

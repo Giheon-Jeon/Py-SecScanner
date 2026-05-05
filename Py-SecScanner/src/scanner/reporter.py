@@ -1,3 +1,6 @@
+import json
+from datetime import datetime
+
 class Reporter:
     def __init__(self):
         self.results = []
@@ -6,7 +9,28 @@ class Reporter:
         """취약점 발견 결과를 리스트에 추가합니다."""
         self.results.append(result)
 
+    def save_to_json(self, filename=None, fuzzing_results=None, header_results=None):
+        """결과를 JSON 파일로 저장합니다."""
+        if not filename:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"scan_report_{timestamp}.json"
+        
+        report_data = {
+            "timestamp": datetime.now().isoformat(),
+            "vulnerabilities": self.results,
+            "fuzzing": fuzzing_results,
+            "missing_headers": header_results
+        }
+        
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, indent=4, ensure_ascii=False)
+            print(f"[+] 리포트가 JSON 파일로 저장되었습니다: {filename}")
+        except Exception as e:
+            print(f"[-] 리포트 저장 중 오류 발생: {e}")
+
     def generate_report(self, fuzzing_results=None, header_results=None):
+
         """최종 리포트를 출력합니다."""
         print("\n" + "="*50)
         print("          취약점 스캔 결과 리포트")
