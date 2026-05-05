@@ -1,10 +1,13 @@
 import requests
+from utils.helpers import get_random_user_agent
 
 class HeaderAnalyzer:
     def __init__(self, target_url):
         self.target_url = target_url
         self.missing_headers = []
+        self.headers = {"User-Agent": get_random_user_agent()}
         self.security_headers = [
+
             "Content-Security-Policy",
             "X-Frame-Options",
             "X-Content-Type-Options",
@@ -17,8 +20,9 @@ class HeaderAnalyzer:
         """대상 URL의 응답 헤더를 분석하여 누락된 보안 헤더를 찾습니다."""
         print(f"\n[*] 보안 헤더 분석 시작: {self.target_url}")
         try:
-            response = requests.get(self.target_url, timeout=5)
+            response = requests.get(self.target_url, headers=self.headers, timeout=5)
             headers = response.headers
+
             
             for header in self.security_headers:
                 if header not in headers:

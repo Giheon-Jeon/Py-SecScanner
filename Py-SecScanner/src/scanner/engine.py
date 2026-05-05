@@ -2,13 +2,16 @@ import requests
 from urllib.parse import urljoin, urlparse, parse_qs, urlencode
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .payloads import PAYLOADS
+from utils.helpers import get_random_user_agent
 
 class ScannerEngine:
     def __init__(self, target_url, max_workers=5):
         self.target_url = target_url
         self.session = requests.Session()
+        self.session.headers.update({"User-Agent": get_random_user_agent()})
         self.results = []
         self.max_workers = max_workers
+
 
     def submit_form(self, form_details, url, value):
         # ... (기존 코드와 동일)
