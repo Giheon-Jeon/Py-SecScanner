@@ -27,7 +27,11 @@ def main():
     engine = ScannerEngine(target_url)
     reporter = Reporter()
 
+    # URL 파라미터 스캔
+    engine.scan_url_params(target_url)
+
     for form in forms:
+
         form_details = crawler.extract_form_details(form)
         print(f"[*] 폼 분석 중... (Action: {form_details['action']}, Method: {form_details['method']})")
         

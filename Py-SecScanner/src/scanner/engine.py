@@ -1,5 +1,5 @@
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, parse_qs, urlencode
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .payloads import PAYLOADS
 
@@ -11,7 +11,7 @@ class ScannerEngine:
         self.max_workers = max_workers
 
     def submit_form(self, form_details, url, value):
-        """페이로드를 포함하여 폼을 전송합니다."""
+        # ... (기존 코드와 동일)
         target_url = urljoin(url, form_details["action"])
         inputs = form_details["inputs"]
         data = {}
@@ -27,9 +27,53 @@ class ScannerEngine:
                 return self.session.post(target_url, data=data, timeout=5)
             else:
                 return self.session.get(target_url, params=data, timeout=5)
-        except Exception as e:
-            # 병렬 실행 중 에러 메시지가 너무 많이 출력되지 않도록 로그 수준 조절 가능
+        except Exception:
             return None
+
+    def scan_url_params(self, url):
+        """URL의 쿼리 파라미터를 스캔합니다."""
+        parsed_url = urlparse(url)
+        params = parse_qs(parsed_url.query)
+        
+        if not params:
+            return
+
+        print(f"[*] URL 파라미터 분석 중... ({url})")
+        for param in params:
+            for vulnerability_type, payloads in PAYLOADS.items():
+                if vulnerability_type == "ssrf": continue # SSRF는 별도 로직 권장
+                
+                def check_fn(response, payload):
+                    if vulnerability_type == "xss": return payload in response.text
+                    if vulnerability_type == "sqli": return any(err in response.text.lower() for err in ["sql syntax", "mysql_fetch_array"])
+                    if vulnerability_type == "lfi": return any(pat in response.text for pat in ["root:x:0:0", "bin/bash"])
+                    if vulnerability_type == "command_injection": return any(pat in response.text for pat in ["uid=", "root:x:0:0"])
+                    return False
+
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    futures = []
+                    for payload in payloads:
+                        # 파라미터 값 교체
+                        test_params = params.copy()
+                        test_params[param] = [payload]
+                        test_url = parsed_url._replace(query=urlencode(test_params, doseq=True)).geturl()
+                        futures.append(executor.submit(self.session.get, test_url, timeout=5))
+                    
+                    for future in as_completed(futures):
+                        try:
+                            response = future.result()
+                            payload = payloads[futures.index(future)] # 정확한 페이로드 매칭을 위해 수정 필요할 수 있음
+                            if response and check_fn(response, payload):
+                                self.results.append({
+                                    "type": f"{vulnerability_type.upper()} (URL Param)",
+                                    "url": url,
+                                    "payload": payload,
+                                    "method": "GET",
+                                    "parameter": param
+                                })
+                                break # 해당 파라미터에서 취약점 발견 시 다음 파라미터로
+                        except Exception:
+                            continue
 
     def _run_parallel_scan(self, form_details, payloads, check_fn, vulnerability_type):
         """페이로드들을 병렬로 실행하고 취약점을 탐지합니다."""
